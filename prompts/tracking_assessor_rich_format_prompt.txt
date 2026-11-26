@@ -1,0 +1,84 @@
+{{ content | trim }}
+
+You are assessing a single-object tracker. You see VIDEO FRAMES with overlays:
+- First exemplar frame(s): GREEN box marks the TARGET object's true appearance.
+- Context frames: RED box = tracker prediction (may be wrong); no RED box = tracker says target absent.
+- Query frame (last): RED box (or none) = the prediction you must assess.
+
+Describe the REAL OBJECTS inside the boxes, never the box colour itself. Reason from what you SEE in the boxes.
+
+NOTES ON THE FRAME LIST:
+- (t=N) is the source video-frame index. The same (t=N) may legitimately appear twice if an exemplar coincides with a context sample — treat them as the SAME physical frame and move on.
+- "earlier context" frames are far in the past, "recent context" frames are just before the query.
+
+YOUR TASK on the QUERY frame is the discrimination question:
+  "Does the tracker correctly track the GREEN target instance in this query frame?"
+
+Answer it by following these steps. Do NOT skip step (a):
+
+(a) LOCATE THE TARGET IN THE QUERY IMAGE FIRST.
+    Before looking at the red box at all, scan the query image and find where the
+    target object (the one in the GREEN exemplar) actually is. Possible outcomes:
+      (a.1) Target is fully visible somewhere in the query.
+      (a.2) Target is partially visible — some of it is out-of-frame, occluded by a
+            person/object/the frame edge, or behind something. Note WHICH PART is
+            visible (head only? legs only? a thin sliver at the edge?).
+      (a.3) Target is genuinely absent — fully occluded, fully out-of-frame, gone.
+            ONLY pick this if you cannot find the target anywhere in the image.
+
+(b) NOW LOOK AT THE TRACKER OUTPUT.
+    Two cases:
+      Case I — A RED box IS shown on the query:
+        * If (a.1) or (a.2): does the red box overlap the target's currently-visible
+          extent by at least HALF? Tight head-only / legs-only / thin-sliver crops
+          are CORRECT *if and only if* they sit on the visible part of the target.
+          A red box on empty floor / sky / wall / a different object (e.g. a balloon,
+          a shoe, another person, the ground) when the target is visible elsewhere
+          → INCORRECT (this is an ID switch / drift / false positive even though
+          the box exists). State explicitly what is inside the box.
+        * If (a.3): the tracker drew a box when the target is absent → INCORRECT
+          (false positive).
+      Case II — NO RED box on the query (the prompt says "no tracker prediction
+      shown"):
+        * If (a.1) or (a.2): the target IS visible but the tracker abstained →
+          INCORRECT (missed visible target).
+        * If (a.3): correct abstention → CORRECT.
+
+(c) VERDICT.
+    Be DECISIVE. Default to CORRECT only when you genuinely cannot tell.
+    Flag INCORRECT whenever step (b) produced a clear, named failure — even if it
+    feels harsh. The downstream corrector handles the actual fix.
+
+EDGE-CASE NOTES:
+- Edge-of-frame thin RED boxes (touching x=0 or y=0 or a frame edge) usually mean
+  the target is exiting the frame. If you saw the target moving toward that edge
+  in the recent context, the tiny box at the edge is almost certainly STILL ON
+  the partially-visible target → CORRECT. Do not dismiss it as "on empty space"
+  unless you can confirm the target is not visible at that edge at all.
+- A RED box that sits on a clearly different object (different colour, different
+  category, distractor that crossed paths with the target, the ground) while
+  the target is visible elsewhere in the frame → INCORRECT (ID switch / drift).
+- Imperfect tightness on a fully-visible target (box covers ~70-90% of the
+  target) → CORRECT. The corrector cares about IoU>=0.5, not pixel-perfect.
+
+OUTPUT FORMAT (MANDATORY — your response is parsed automatically):
+Your final line MUST be of the form:
+<answer>{"tracking_correct": true}</answer>
+or
+<answer>{"tracking_correct": false}</answer>
+Do NOT produce any other JSON keys. Do NOT continue reasoning after </answer>.
+
+LENGTH BUDGET: keep your `<think>` block under ~250 words. If you find yourself
+rephrasing the same observation, STOP and emit your verdict.
+
+Decision rules summary:
+- TRUE: red box covers ≥50% of the target's visible extent, OR no box AND target genuinely absent.
+- FALSE: target visible but no box; box on a different object; box on empty space when target is visible elsewhere; box covering well under half of a fully-visible target.
+
+Case 1 — Tracking is correct:
+<think>your reasoning here</think>
+<answer>{"tracking_correct": true}</answer>
+
+Case 2 — Tracking is incorrect:
+<think>your reasoning here</think>
+<answer>{"tracking_correct": false}</answer>

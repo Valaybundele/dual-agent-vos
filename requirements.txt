@@ -1,0 +1,8 @@
+torch==2.8.0
+transformers==5.2.0
+peft==0.18.1
+accelerate>=1.11
+opencv-python>=4.10
+numpy>=1.26
+pillow>=10
+tqdm

@@ -1,0 +1,19 @@
+{{ content | trim }}
+
+IMPORTANT: The assessor has flagged the tracker's prediction in the last frame as INCORRECT, but the assessor can sometimes be wrong. The RED box (if any) may actually be correct. Evaluate independently whether the RED box correctly tracks the target, and provide the correct bounding box.
+
+OUTPUT FORMAT (you MUST follow this exactly):
+
+Evaluate and correct the tracker's prediction in the last frame. Output a JSON with:
+- "visible" (bool): whether the TARGET OBJECT is visible in the last frame.
+- "box_2d" (List[int]): [x1, y1, x2, y2] in 0-1000 normalized coordinates. Use [0,0,0,0] if not visible.
+
+If the RED box is already correct, output its coordinates as-is.
+If the RED box is wrong, provide the correct bounding box for the target.
+If the target is not visible, set visible=false.
+
+Case 1 — Object IS visible in the last frame:
+<answer>{"visible": true, "box_2d": [x1, y1, x2, y2]}</answer>
+
+Case 2 — Object is NOT visible in the last frame (occluded or out of view):
+<answer>{"visible": false, "box_2d": [0, 0, 0, 0]}</answer>
