@@ -4,7 +4,7 @@
 
 Valay Bundele, Susmit Agrawal, Mehran Hosseinzadeh, The Nam Nguyen, Hendrik P. A. Lensch
 
-Official evaluation code for **Dual-Agent** on SeCVOS.
+Official evaluation code for **Dual-Agent** on SeCVOS and LVOS-v2.
 
 Dual-Agent adds two vision-language agents to SAM 3. An **assessor** checks the track at
 trigger frames (reappearance after occlusion, periodic polling during occlusion, and unstable
@@ -19,10 +19,10 @@ or reports that the target is not visible, and SAM 3 resumes tracking from that 
 
 ## Results
 
-| Method | SeCVOS J&F |
-|---|---|
-| SAM 3 | 74.21 |
-| Dual-Agent | **76.94** |
+| Method | SeCVOS J&F | LVOS-v2 val J&F |
+|---|---|---|
+| SAM 3 | 74.21 | 88.2 |
+| Dual-Agent | **76.94** | **89.4** |
 
 ## Installation
 
@@ -43,26 +43,44 @@ huggingface-cli download valayy03/dual-agent-vos-corrector --local-dir models/co
 
 SAM 3 weights are fetched from [facebook/sam3](https://huggingface.co/facebook/sam3) on first use.
 
-Download [SeCVOS](https://huggingface.co/datasets/OpenIXCLab/SeCVOS).
+Download [SeCVOS](https://huggingface.co/datasets/OpenIXCLab/SeCVOS) and [LVOS-v2](https://github.com/LingyiHongfd/LVOS).
 
 ## Evaluation
 
 ```bash
-export SECVOS_ROOT=/path/to/SeCVOS
 export ASSESSOR_MODEL=models/Qwen3-VL-8B-Thinking
 export CORRECTOR_ADAPTER=models/corrector-lora
-export OUTPUT_DIR=out/secvos
-bash scripts/run_secvos.sh
 ```
 
 Predicted masks are written to `$OUTPUT_DIR/Annotations`. Set `NUM_GPUS` to split the videos
 across GPUs.
 
+### SeCVOS
+
+```bash
+export SECVOS_ROOT=/path/to/SeCVOS
+OUTPUT_DIR=out/secvos bash scripts/run_secvos.sh
+```
+
 Score with the official [SeC](https://github.com/OpenIXCLab/SeC) evaluator:
 
 ```bash
 git clone https://github.com/OpenIXCLab/SeC
-SEC_REPO=SeC PRED_DIR=$OUTPUT_DIR/Annotations bash scripts/score_secvos.sh
+SEC_REPO=SeC PRED_DIR=out/secvos/Annotations bash scripts/score_secvos.sh
+```
+
+### LVOS-v2
+
+```bash
+export LVOS_ROOT=/path/to/LVOSv2/valid
+OUTPUT_DIR=out/lvos bash scripts/run_lvos.sh
+```
+
+Score with the official [LVOS](https://github.com/LingyiHongfd/lvos-evaluation) evaluator:
+
+```bash
+git clone https://github.com/LingyiHongfd/lvos-evaluation
+LVOS_EVAL=lvos-evaluation PRED_DIR=out/lvos/Annotations bash scripts/score_lvos.sh
 ```
 
 ## Citation
@@ -78,4 +96,4 @@ SEC_REPO=SeC PRED_DIR=$OUTPUT_DIR/Annotations bash scripts/score_secvos.sh
 
 ## License
 
-[CC BY-NC 4.0](LICENSE). SAM 3, Qwen3-VL and SeCVOS are subject to their own licenses.
+[CC BY-NC 4.0](LICENSE). SAM 3, Qwen3-VL, SeCVOS and LVOS are subject to their own licenses.
