@@ -12,13 +12,16 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 import cv2
 import numpy as np
 from PIL import Image
 
 from sam3_tracker import mask_to_box
+
+if TYPE_CHECKING:
+    from track import ObjectResult
 
 logger = logging.getLogger(__name__)
 

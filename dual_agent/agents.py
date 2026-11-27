@@ -1,12 +1,15 @@
-"""What the two VLM agents see and do on one trigger."""
+"""Assessor and corrector calls on a trigger frame."""
 
 import logging
 from dataclasses import dataclass
-from typing import List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, List, NamedTuple, Optional, Tuple
 
 from PIL import Image
 
 from sam3_tracker import box_iou
+
+if TYPE_CHECKING:
+    from verifier import Answer
 
 logger = logging.getLogger(__name__)
 
